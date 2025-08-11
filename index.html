@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>¿Cómo estamos para la evaluación? — Versión Galáctica</title>
+<style>
+  /* ==========================
+     Paleta y estética "space opera"
+     ========================== */
+  :root{
+    --bg:#0b0f17;        /* espacio */
+    --ink:#e6e9f0;       /* texto claro */
+    --neon:#00f3ff;      /* cian neón */
+    --neon2:#ffe66e;     /* amarillo sable */
+    --accent:#7cff7c;    /* verde neón */
+    --warning:#ff6b6b;   /* rojo alerta */
+    --panel:#0f1724;     /* panel oscuro */
+    --panel2:#121a2b;    /* panel */
+  }
+  html,body{height:100%;}
+  body{
+    margin:0; background:radial-gradient(1200px 800px at 50% 10%, #0e1630 0%, var(--bg) 60%, #05070c 100%);
+    color:var(--ink); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue", sans-serif;
+    overflow-x:hidden;
+  }
+
+  /* Fondo estelar */
+  .stars, .stars2, .stars3 {
+    position: fixed; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:0;
+    background-repeat:repeat; background-position:0 0;
+  }
+  .stars  { background-image: radial-gradient(2px 2px at 20px 30px, #fff, transparent), radial-gradient(1px 1px at 40px 70px, #9fd, transparent), radial-gradient(2px 2px at 90px 40px, #adf, transparent); animation: drift 120s linear infinite; opacity:.6;}
+  .stars2 { background-image: radial-gradient(1px 1px at 50px 60px, #fff, transparent), radial-gradient(2px 2px at 100px 120px, #ccf, transparent); animation: drift 180s linear infinite; opacity:.35;}
+  .stars3 { background-image: radial-gradient(2px 2px at 80px 20px, #eef, transparent), radial-gradient(1px 1px at 120px 90px, #bdf, transparent); animation: drift 240s linear infinite; opacity:.25;}
+  @keyframes drift{ from{background-position:0 0} to{background-position:-10000px 5000px} }
+
+  .wrap{max-width:1100px; margin:34px auto; padding:0 18px; position:relative; z-index:1;}
+  .frame{
+    background: linear-gradient(180deg, rgba(18,26,43,.9), rgba(11,15,23,.9));
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:22px;
+    box-shadow: 0 0 0 2px rgba(0,243,255,.06), inset 0 0 40px rgba(0,243,255,.03), 0 10px 30px rgba(0,0,0,.5);
+    overflow:hidden;
+  }
+
+  /* Header tipo consola */
+  .header{
+    padding:18px 18px 10px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    background: linear-gradient(180deg, rgba(0,243,255,.06), transparent 60%);
+  }
+  h1{ margin:0; font-weight:800; letter-spacing:.5px; font-size: clamp(22px, 3.5vw, 34px); }
+  .title-accent{ color:var(--neon2); text-shadow:0 0 8px rgba(255,230,110,.45); }
+  .subtitle{ opacity:.8; font-size:14px; margin-top:2px; }
+
+  /* HUD */
+  .hud{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .chip{ background: linear-gradient(180deg, #182238, #0f1724); border:1px solid rgba(255,255,255,.08); color:#dce7ff;
+         padding:8px 12px; border-radius:999px; font-size:13px; box-shadow: inset 0 0 20px rgba(0,243,255,.06); }
+  .score, .streak{ font-weight:800; }
+  .meter{ display:flex; align-items:center; gap:10px; min-width:260px; }
+  .bar{ height:12px; background:#0b1426; border:1px solid rgba(255,255,255,.1); border-radius:999px; overflow:hidden; flex:1;
+        box-shadow: inset 0 0 12px rgba(0,243,255,.08); }
+  .bar > i{ display:block; height:100%; width:0%; background:linear-gradient(90deg, var(--neon2), var(--neon)); box-shadow:0 0 12px var(--neon2); }
+
+  /* Panel pregunta */
+  .panel{ padding:18px; display:grid; gap:12px; }
+  .card{
+    background: linear-gradient(180deg, rgba(20,28,45,.85), rgba(12,18,31,.85));
+    border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:18px; position:relative;
+    box-shadow: inset 0 0 40px rgba(0,243,255,.03);
+  }
+  .q-header{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .badge{ font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.15);
+          background:rgba(0,243,255,.08); color:#cfefff; }
+  .skill{ background:rgba(255,230,110,.08); border-color: rgba(255,230,110,.25); color:#fff1b0; }
+  .q-text{ font-size:18px; }
+  .source{ font-size:13px; opacity:.8; }
+
+  /* Opciones tipo botones de cabina */
+  .options{ display:grid; gap:10px; }
+  .option{
+    display:flex; gap:12px; align-items:flex-start; cursor:pointer; user-select:none;
+    padding:12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background:linear-gradient(180deg, #15203a, #0e172c);
+    box-shadow: inset 0 0 18px rgba(0,243,255,.05), 0 2px 10px rgba(0,0,0,.25);
+    transition: transform .05s ease, box-shadow .2s ease, border-color .2s ease;
+  }
+  .option:hover{ transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,243,255,.12); }
+  .option.correct{ border-color: rgba(124,255,124,.8); box-shadow: 0 0 18px rgba(124,255,124,.25) inset; }
+  .option.wrong{ border-color: rgba(255,107,107,.7); box-shadow: 0 0 18px rgba(255,107,107,.25) inset; }
+  .circle{ width:22px; height:22px; border:2px solid rgba(0,243,255,.5); border-radius:50%; margin-top:2px; flex:0 0 22px; }
+  .opt-text{ flex:1; }
+
+  .pulse{ animation: pulse .45s ease; } @keyframes pulse{ 0%{transform:scale(1)} 50%{transform:scale(1.015)} 100%{transform:scale(1)} }
+  .shake{ animation: shake .35s ease; } @keyframes shake{ 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+
+  .float-score{ position:absolute; right:12px; top:8px; font-weight:800; color:var(--accent);
+                text-shadow:0 0 10px rgba(124,255,124,.5); opacity:0; transform:translateY(0);
+                transition: all .6s ease; pointer-events:none; }
+  .float-score.show{ opacity:1; transform:translateY(-8px); }
+  .float-wrong{ position:absolute; right:12px; top:8px; font-weight:800; color:var(--warning);
+                text-shadow:0 0 10px rgba(255,107,107,.5); opacity:0; transform:translateY(0);
+                transition: all .6s ease; pointer-events:none; }
+  .float-wrong.show{ opacity:1; transform:translateY(-8px); }
+
+  .explain{ margin-top:10px; border-left:4px solid rgba(255,230,110,.5); background:rgba(255,230,110,.06);
+            padding:10px; border-radius:8px; display:none; }
+  .explain.show{ display:block; }
+
+  .controls{ display:flex; gap:10px; justify-content:center; margin:10px 0 18px; flex-wrap:wrap; }
+  button{
+    border:1px solid rgba(255,255,255,.15);
+    background: radial-gradient(120px 40px at 50% 0%, rgba(0,243,255,.25), rgba(0,0,0,0) 60%) , linear-gradient(180deg, #17233d, #0d162b);
+    color:#e6faff; padding:10px 16px; border-radius:12px; cursor:pointer; font-weight:700; letter-spacing:.3px;
+    box-shadow: inset 0 0 18px rgba(0,243,255,.12), 0 6px 20px rgba(0,0,0,.35);
+    transition: transform .05s ease, box-shadow .15s ease, filter .2s ease;
+  }
+  button:hover{ filter:brightness(1.08); box-shadow: inset 0 0 24px rgba(0,243,255,.2), 0 10px 28px rgba(0,0,0,.45); }
+  button:active{ transform: translateY(1px); }
+
+  /* Resultados y retroalimentación final */
+  .result{ margin:12px 18px 20px; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px;
+           background: linear-gradient(180deg, rgba(0,243,255,.05), rgba(0,0,0,.15)); display:none; }
+  .result h2{ margin:0 0 8px; text-align:center; text-shadow:0 0 12px rgba(0,243,255,.35); }
+  .scoreline{ text-align:center; font-size:18px; margin-bottom:8px; }
+  .tier{ text-align:center; margin:6px 0 12px; font-weight:800; }
+  .tier.padawan{ color:#9fd1ff; text-shadow:0 0 10px rgba(159,209,255,.4); }
+  .tier.knight{ color:#7cff7c; text-shadow:0 0 10px rgba(124,255,124,.45); }
+  .tier.master{ color:#ffe66e; text-shadow:0 0 10px rgba(255,230,110,.55); }
+  .tips{ display:grid; gap:8px; margin-top:8px; }
+  .a-item{ border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:10px; background:rgba(255,255,255,.02); }
+  .a-item.good{ border-color: rgba(124,255,124,.35); }
+  .a-item.bad{ border-color: rgba(255,107,107,.35); }
+
+  /* Canvas FX por encima */
+  canvas#fx{ position:absolute; inset:0; pointer-events:none; z-index:3; }
+</style>
+</head>
+<body>
+<div class="stars"></div><div class="stars2"></div><div class="stars3"></div>
+
+<div class="wrap">
+  <div class="frame">
+    <div class="header">
+      <div>
+        <h1><span class="title-accent">¿Cómo estamos</span> para la evaluación?</h1>
+        <div class="subtitle">Entrenamiento galáctico de comprensión lectora — Siglo de Oro + Chile</div>
+      </div>
+      <div class="hud">
+        <div class="chip score">Puntaje: <span id="score">0</span></div>
+        <div class="chip streak">Racha: <span id="streak">0</span> ✔</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="chip meter"><span id="progressText">Pregunta 1 / 25</span><div class="bar"><i id="bar"></i></div></div>
+
+      <div class="card" id="card">
+        <div id="qwrap"></div>
+        <canvas id="fx"></canvas>
+      </div>
+
+      <div class="controls">
+        <button id="btnPrev" disabled>⟵ Anterior</button>
+        <button id="btnReveal" title="Ver la respuesta">Mostrar respuesta</button>
+        <button id="btnNext">Siguiente ⟶</button>
+      </div>
+
+      <div id="result" class="result"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== Preguntas (25) =====================
+const QUESTIONS = [
+  // 1-4 Garcilaso — Soneto XXIII
+  {text:"¿En qué verso se menciona primero un elemento natural que representa la juventud?",
+   source:"Garcilaso, Soneto XXIII", skill:"Localizar",
+   options:["Marchitará la rosa el viento helado","se muestra la color en vuestro gesto","en tanto que de rosa y de azucena","todo lo mudará la edad ligera"],
+   correct:2, why:"El verso inicial «en tanto que de rosa y de azucena» introduce flores símbolo de juventud y belleza, eje del carpe diem."},
+  {text:"¿Qué simboliza la primavera en este soneto?",
+   source:"Garcilaso, Soneto XXIII", skill:"Interpretar",
+   options:["el paso del tiempo","el destino","el amor","la juventud"],
+   correct:3, why:"La primavera evoca plenitud juvenil: color, frescura y belleza previa al marchitar del tiempo."},
+  {text:"El tema central del poema se relaciona con…",
+   source:"Garcilaso, Soneto XXIII", skill:"Comprender",
+   options:["aprovechar la vejez","comparar la belleza con flores","aprovechar la juventud porque el tiempo pasa","celebrar que llega la primavera"],
+   correct:2, why:"La invitación carpe diem: gozar la juventud antes de que «todo lo mudará la edad ligera»."},
+  {text:"¿Qué tópico literario predomina en el soneto?",
+   source:"Garcilaso, Soneto XXIII", skill:"Identificar",
+   options:["Ubi sunt","Locus amoenus","Carpe diem","Beatus ille"],
+   correct:2, why:"Predomina el carpe diem: urgencia de disfrutar la juventud ante la fugacidad del tiempo."},
+
+  // 5-8 San Juan — Llama de amor viva
+  {text:"El tema del poema «Llama de amor viva» corresponde a…",
+   source:"San Juan de la Cruz", skill:"Comprender",
+   options:["la experiencia mística de unión con Dios","la pasión de un amor carnal","el amor no correspondido","la exaltación de la belleza femenina"],
+   correct:0, why:"La «llama» es metáfora del amor divino que hiere y cura el alma en unión mística."},
+  {text:"¿Qué verso expresa que el amor divino ilumina lo más profundo del alma?",
+   source:"San Juan de la Cruz", skill:"Localizar",
+   options:["¡Oh mano blanda! ¡Oh toque delicado que a vida eterna sabe!","¡Oh cauterio suave! ¡Oh regalada llaga!","¡Oh lámparas de fuego… las profundas cavernas del sentido se quedan ciegas!","Matando, muerte en vida has trocado."],
+   correct:2, why:"Las «lámparas de fuego» y «profundas cavernas» sugieren iluminación interior del alma."},
+  {text:"En «De mi alma en el más profundo centro», «centro» se interpreta como…",
+   source:"San Juan de la Cruz", skill:"Interpretar",
+   options:["recuerdo","espíritu","corazón","cuerpo"],
+   correct:1, why:"El «centro» alude al núcleo espiritual del alma, sede de la unión con Dios."},
+  {text:"En «Matando, muerte en vida has trocado», la figura retórica es…",
+   source:"San Juan de la Cruz", skill:"Identificar",
+   options:["Aliteración","Metáfora","Antítesis","Anáfora"],
+   correct:2, why:"Oposición paradójica entre «muerte» y «vida»: recurso de antítesis."},
+
+  // 9-13 Sor Juana — Hombres necios
+  {text:"¿Cuál es el tema principal del poema?",
+   source:"Sor Juana, Hombres necios", skill:"Comprender",
+   options:["solo la defensa de la mujer","la justicia divina frente a una crisis","la crítica al machismo y al trato desigual de la mujer","sátira política de su tiempo"],
+   correct:2, why:"Sor Juana denuncia la doble moral masculina y el trato desigual hacia las mujeres."},
+  {text:"En los primeros versos, la autora afirma que…",
+   source:"Sor Juana, Hombres necios", skill:"Interpretar",
+   options:["los varones son responsables de lo mismo que critican","las mujeres se excusan llamando necios a los varones","los culpables son quienes hablan sin argumentos","los necios actúan y luego critican"],
+   correct:0, why:"«Sin ver que sois la ocasión de lo mismo que culpáis»: culpa a los varones de provocar lo que censuran."},
+  {text:"A lo largo del poema, los varones son cuestionados sobre todo por su…",
+   source:"Sor Juana, Hombres necios", skill:"Inferir",
+   options:["hipocresía e inmadurez","debilidad y crítica","temor y cobardía","porfía e insistencia"],
+   correct:0, why:"La voz poética evidencia incoherencias y exigencias contradictorias: rasgos de hipocresía."},
+  {text:"En la introducción del poema se presenta…",
+   source:"Sor Juana, Hombres necios", skill:"Identificar",
+   options:["el tema y a quién se dirige","la situación de las mujeres","un argumento de defensa","la causa de la desigualdad"],
+   correct:0, why:"La apertura interpela a los «hombres necios» y plantea el tema de la acusación injusta."},
+  {text:"¿En qué verso se resume que critican tanto si aceptan como si no?",
+   source:"Sor Juana, Hombres necios", skill:"Localizar",
+   options:["quejándoos, si os tratan mal","pues la que más se recata, si no os admite, es ingrata","burlándoos, si os quieren bien","opinión ninguna gana"],
+   correct:3, why:"«Opinión ninguna gana» sintetiza la doble vara: hagan lo que hagan, las mujeres pierden."},
+
+  // 14-17 Fray Luis — Oda a la vida retirada
+  {text:"El contraste indica que la vida retirada es…",
+   source:"Fray Luis, Oda a la vida retirada", skill:"Comprender",
+   options:["ruidosa y activa","de trabajo frente al descanso urbano","tranquila y alejada del ruido frente al bullicio","rica en lujos"],
+   correct:2, why:"«Qué descansada vida / la del que huye del mundanal ruido»: quietud frente al bullicio."},
+  {text:"¿Qué tópico predomina en el poema?",
+   source:"Fray Luis, Oda a la vida retirada", skill:"Identificar",
+   options:["Ubi sunt","Locus amoenus","Tempus fugit","Carpe diem"],
+   correct:1, why:"El elogio del retiro en un espacio apacible corresponde al locus amoenus."},
+  {text:"La actitud del poeta hacia quienes siguen la «senda» de los sabios es de…",
+   source:"Fray Luis, Oda a la vida retirada", skill:"Interpretar",
+   options:["envidia","crítica","admiración y elogio","lástima"],
+   correct:2, why:"Valora a los pocos sabios que han elegido la vida retirada."},
+  {text:"La imagen del «dorado techo… del sabio moro» expresa…",
+   source:"Fray Luis, Oda a la vida retirada", skill:"Interpretar",
+   options:["admiración por los bienes materiales","crítica a la riqueza y el lujo","deseo de fama","envidia arquitectónica"],
+   correct:1, why:"Contrasta la ostentación palaciega con la serenidad sin lujos del retiro."},
+
+  // 18-21 Quevedo — Amor constante más allá de la muerte
+  {text:"¿Cuál es el tema central del poema?",
+   source:"Quevedo, Amor constante más allá de la muerte", skill:"Comprender",
+   options:["fugacidad de la juventud","deseo de fama","lucha entre bien y mal","persistencia del amor más allá de la muerte"],
+   correct:3, why:"Los tercetos declaran que aun como «polvo», será «polvo enamorado»."},
+  {text:"¿Qué verso muestra que el amor no se detiene ante obstáculos?",
+   source:"Quevedo, Amor constante más allá de la muerte", skill:"Localizar",
+   options:["Dejará la memoria, en donde ardía","Y perder el respeto a ley severa","Nadar sabe mi llama el agua fría","Mas no de esotra parte en la ribera"],
+   correct:2, why:"La «llama» que sabe «nadar» en «agua fría» simboliza vencer impedimentos."},
+  {text:"En «Su cuerpo dejará… Polvo serán, mas polvo enamorado», el amor…",
+   source:"Quevedo, Amor constante más allá de la muerte", skill:"Interpretar",
+   options:["es frágil y terminará pronto","perdura a pesar de la muerte","existe sólo en la juventud","es ilusorio"],
+   correct:1, why:"Aunque el cuerpo sea ceniza, subsiste el sentimiento amoroso."},
+  {text:"¿Qué figura destaca en «Serán ceniza, mas tendrá sentido; / Polvo serán, mas polvo enamorado»?",
+   source:"Quevedo, Amor constante más allá de la muerte", skill:"Identificar",
+   options:["Hipérbole","Paradoja/antítesis","Anáfora","Aliteración"],
+   correct:1, why:"Contrapone destrucción corporal con permanencia del amor; «mas» crea antítesis paradójica."},
+
+  // 22-23 Gabriela Mistral — Soneto de la muerte I
+  {text:"¿Cuál es el tono predominante en las estrofas citadas?",
+   source:"Mistral, Soneto de la muerte I", skill:"Interpretar",
+   options:["alegría y celebración","cobijo y tristeza","esperanza y optimismo","enojo y rebeldía"],
+   correct:1, why:"Lenguaje maternal («dulcedumbre de madre») y duelo sereno dan cobijo con tristeza."},
+  {text:"La «tierra humilde y soleada» simboliza principalmente…",
+   source:"Mistral, Soneto de la muerte I", skill:"Interpretar",
+   options:["muerte y olvido","belleza divina","descanso y paz tras la vida","realización plena"],
+   correct:2, why:"La tierra es cuna y reposo: un descanso luminoso más que un final oscuro."},
+
+  // 24-25 Violeta Parra — El rin del angelito
+  {text:"¿Cuál es el destino del angelito según la estrofa inicial?",
+   source:"Violeta Parra, El rin del angelito", skill:"Localizar",
+   options:["permanecer en la tierra","reencarnar","ir al cielo","buscar su alma"],
+   correct:2, why:"«Ya se va para los cielos»: afirma el destino del angelito."},
+  {text:"Según los versos, ¿qué hará el angelito en el cielo?",
+   source:"Violeta Parra, El rin del angelito", skill:"Comprender",
+   options:["cuidar de sus abuelos","jugar con sus hermanos","rezar por su familia","hallar sitio para su alma"],
+   correct:2, why:"«A rogar por sus abuelos, por sus padres y hermanitos» indica la acción de interceder."}
+];
+
+// ===================== Estado =====================
+let index = 0;
+let answered = new Array(QUESTIONS.length).fill(null);
+let revealed = new Array(QUESTIONS.length).fill(false);
+let score = 0;
+let streak = 0;
+
+const $card = document.getElementById('card');
+const $qwrap = document.getElementById('qwrap');
+const $bar = document.getElementById('bar');
+const $progressText = document.getElementById('progressText');
+const $btnPrev = document.getElementById('btnPrev');
+const $btnNext = document.getElementById('btnNext');
+const $btnReveal = document.getElementById('btnReveal');
+const $result = document.getElementById('result');
+const $score = document.getElementById('score');
+const $streak = document.getElementById('streak');
+
+// ===================== Canvas FX =====================
+const fxCanvas = document.getElementById('fx');
+const ctx = fxCanvas.getContext('2d');
+function resizeCanvas(){ fxCanvas.width = $card.clientWidth; fxCanvas.height = $card.clientHeight; }
+window.addEventListener('resize', resizeCanvas);
+
+// confeti (acierto)
+function confettiBurst(x, y){
+  const parts = [];
+  for(let i=0;i<60;i++){
+    parts.push({x,y,vx:(Math.random()-0.5)*5, vy: -Math.random()*5-2, life: 50+Math.random()*30, c:`hsl(${Math.random()*60+30},70%,60%)`});
+  }
+  let tick = 0;
+  function anim(){
+    ctx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+    parts.forEach(p=>{
+      p.vy += 0.12; p.x += p.vx; p.y += p.vy; p.life--;
+      ctx.fillStyle = p.c; ctx.fillRect(p.x,p.y,3,3);
+    });
+    tick++;
+    if(tick<90) requestAnimationFrame(anim); else ctx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+  }
+  anim();
+}
+// polvo (error)
+function dustPuff(x, y){
+  const parts = [];
+  for(let i=0;i<40;i++){
+    parts.push({x,y,vx:(Math.random()-0.5)*3, vy:(Math.random()-0.5)*2, life: 40+Math.random()*20, size: 2+Math.random()*4});
+  }
+  let tick = 0;
+  function anim(){
+    ctx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+    parts.forEach(p=>{
+      p.vy += 0.05; p.x += p.vx; p.y += p.vy; p.life--;
+      const alpha = Math.max(0, p.life/60);
+      ctx.fillStyle = `rgba(200,160,120,${alpha})`;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+    });
+    tick++;
+    if(tick<70) requestAnimationFrame(anim); else ctx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+  }
+  anim();
+}
+// beep simple
+function beep(freq=880, time=0.12){
+  try{
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(); const g = actx.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    o.connect(g); g.connect(actx.destination);
+    g.gain.setValueAtTime(0.0001, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.12, actx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + time);
+    o.start(); o.stop(actx.currentTime + time + 0.02);
+  }catch(e){}
+}
+
+// ===================== Render =====================
+function render(){
+  resizeCanvas();
+  const q = QUESTIONS[index];
+  $progressText.textContent = `Pregunta ${index+1} / ${QUESTIONS.length}`;
+  $bar.style.width = `${((index) / (QUESTIONS.length)) * 100}%`;
+  $btnPrev.disabled = index === 0;
+  $btnNext.textContent = index === QUESTIONS.length - 1 ? 'Finalizar' : 'Siguiente ⟶';
+
+  const chosen = answered[index];
+  const show = revealed[index];
+
+  const optionsHTML = q.options.map((opt,i)=>{
+    let cls = 'option';
+    if (chosen !== null){
+      if (i === chosen && chosen !== q.correct) cls += ' wrong shake';
+      if (i === q.correct && (chosen !== null)) cls += ' correct pulse';
+    }
+    if (show && i === q.correct) cls += ' correct';
+    return `
+      <div class="${cls}" data-i="${i}">
+        <div class="circle"></div>
+        <div class="opt-text">${['a)','b)','c)','d)'][i]} ${opt}</div>
+      </div>`;
+  }).join('');
+
+  $qwrap.innerHTML = `
+    <div class="q-header">
+      <div class="badge">Poema: ${q.source}</div>
+      <div class="badge skill">${q.skill}</div>
+    </div>
+    <div class="q-text">${q.text}</div>
+    <div class="options">${optionsHTML}</div>
+    <div class="source">Fuente trabajada en clases</div>
+    <div class="float-score" id="floatScore">+0</div>
+    <div class="float-wrong" id="floatWrong">✖</div>
+    <div class="explain" id="explain"><strong>Explicación:</strong> ${q.why}</div>
+  `;
+
+  if (show || (answered[index] !== null && answered[index] !== q.correct)){
+    document.getElementById('explain').classList.add('show');
+  }
+
+  // listeners
+  $qwrap.querySelectorAll('.option').forEach(el=>{
+    el.addEventListener('click',(ev)=>{
+      const rect = $card.getBoundingClientRect();
+      const clickX = ev.clientX - rect.left;
+      const clickY = ev.clientY - rect.top;
+      const i = Number(el.getAttribute('data-i'));
+      if (answered[index] !== null) return;
+      answered[index] = i;
+      if (i === q.correct){
+        streak++;
+        const points = 100 + (streak-1)*20;
+        score += points;
+        $score.textContent = score;
+        $streak.textContent = streak;
+        const fs = document.getElementById('floatScore');
+        fs.textContent = `+${points}`; fs.classList.add('show'); setTimeout(()=>fs.classList.remove('show'), 700);
+        confettiBurst(clickX, clickY);
+        beep(1108, 0.12);
+      }else{
+        streak = 0; $streak.textContent = streak;
+        const fw = document.getElementById('floatWrong');
+        fw.classList.add('show'); setTimeout(()=>fw.classList.remove('show'), 700);
+        document.getElementById('explain').classList.add('show');
+        dustPuff(clickX, clickY);
+        beep(300, 0.18);
+      }
+      render();
+    });
+  });
+}
+
+// ===================== Resultados + Retroalimentación =====================
+function feedbackTier(pct){
+  if (pct < 60) return {label:"Padawan en práctica", cls:"padawan", msg:"Sigue entrenando. Revisa los tópicos (Carpe diem, Locus amoenus) y vuelve a intentarlo."};
+  if (pct < 85) return {label:"Jedi Knight", cls:"knight", msg:"Buen dominio. Aún puedes afinar figuras retóricas y simbolismos."};
+  return {label:"Jedi Master", cls:"master", msg:"¡Excelente! Comprensión sólida de temas, tópicos y recursos líricos."};
+}
+function showResult(){
+  const total = QUESTIONS.length;
+  let correct = 0;
+  answered.forEach((a, i)=>{ if (a === QUESTIONS[i].correct) correct++; });
+  const pct = Math.round((correct/total)*100);
+  const tier = feedbackTier(pct);
+
+  const weakAreas = []; // feedback ligero por habilidad (estimado)
+  const skills = {Localizar:0, Interpretar:0, Comprender:0, Identificar:0, Inferir:0, Aplicar:0};
+  QUESTIONS.forEach((q,i)=>{ if (answered[i] !== q.correct) skills[q.skill] = (skills[q.skill]||0)+1; });
+  Object.entries(skills).forEach(([k,v])=>{ if(v>0) weakAreas.push(`${k.toLowerCase()}`); });
+  const tip = weakAreas.length? `Refuerza: ${weakAreas.join(", ")}.` : "¡Dominaste bien todas las habilidades!";
+
+  const items = QUESTIONS.map((q,i)=>{
+    const good = answered[i] === q.correct;
+    const your = answered[i]===null? '—' : ['a','b','c','d'][answered[i]];
+    const right = ['a','b','c','d'][q.correct];
+    return `<div class="a-item ${good?'good':'bad'}">
+      <div><strong>${i+1}.</strong> ${q.text} <span class="badge" style="margin-left:6px">${q.skill}</span></div>
+      <div>Tu respuesta: <strong>${your}</strong> · Correcta: <strong>${right}</strong></div>
+      <div style="opacity:.85; margin-top:6px"><em>Explicación:</em> ${q.why}</div>
+    </div>`;
+  }).join('');
+
+  $result.style.display = 'block';
+  $result.innerHTML = `
+    <h2>Resultados</h2>
+    <div class="scoreline">Aciertos: <strong>${correct}</strong> / ${total} (${pct}%) · Puntaje: <strong>${score}</strong></div>
+    <div class="tier ${tier.cls}">${tier.label}</div>
+    <div class="tips">${tier.msg} ${tip}</div>
+    <div class="tips" style="margin-top:10px">${items}</div>
+    <div class="controls" style="margin-top:14px">
+      <button onclick="window.print()">Imprimir</button>
+      <button onclick="restart()">Reiniciar</button>
+    </div>
+  `;
+}
+
+// ===================== Controles =====================
+function restart(){
+  index = 0; answered.fill(null); revealed.fill(false);
+  score = 0; streak = 0; $score.textContent = score; $streak.textContent = streak;
+  $result.style.display = 'none';
+  render();
+}
+$btnPrev.addEventListener('click',()=>{ if(index>0){ index--; render(); }});
+$btnNext.addEventListener('click',()=>{
+  if(index < QUESTIONS.length-1){ index++; render(); }
+  else { $bar.style.width = '100%'; showResult(); }
+});
+$btnReveal.addEventListener('click',()=>{ revealed[index] = true; render(); });
+
+// Init
+document.addEventListener('DOMContentLoaded', render);
+</script>
+</body>
+</html>
